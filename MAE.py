@@ -38,7 +38,7 @@ class MAE(nn.Module):
     
     
     def predict(self, x):
-        with torch.no_grad:
+        with torch.no_grad():
             self.eval()
 
             device = x.device
@@ -156,7 +156,7 @@ print(f"input tensor shape: {img_ts.shape} dtype: {img_ts.dtype} device: {img_ts
 encoder = ViT(img_size, patch_size, dim=512, mlp_dim=1024, dim_per_head=64)
 decoder_dim = 512
 mae = MAE(encoder, decoder_dim, decoder_depth=6)
-weight = torch.load(('./mae.pth'), map_location='cpu')
+# weight = torch.load(('./mae.pth'), map_location='cpu')
 mae.to(device)
 
 # 推理
