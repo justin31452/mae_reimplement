@@ -25,7 +25,7 @@ decoder_dim = 512
 mae = MAE(encoder, decoder_dim, decoder_depth=6)
 mae.to(device)
 
-recons_img_ts, masked_img_ts = mae.predict(img_ts)
+recons_img_ts, masked_img_ts = mae.train(img_ts)
 recons_img_ts, masked_img_ts = recons_img_ts.cpu().squeeze(0), masked_img_ts.cpu().squeeze(0)
 
 recons_img = ToPILImage()(recons_img_ts)
