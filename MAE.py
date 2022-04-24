@@ -38,13 +38,14 @@ class MAE(nn.Module):
     
     
     def predict(self, x):
+
         with torch.no_grad():
             self.eval()
 
             device = x.device
             b, c, h, w = x.shape
 
-            '''i. Patch partition'''
+            ### Patch partition
 
             num_patches = (h // self.patch_h) * (w // self.patch_w)
             # (b, c=3, h, w)->(b, n_patches, patch_size**2*c)
@@ -67,14 +68,14 @@ class MAE(nn.Module):
             batch_ind = torch.arange(b, device=device).unsqueeze(-1)
             mask_patches, unmask_patches = patches[batch_ind, mask_ind], patches[batch_ind, unmask_ind]
 
-            '''iii. Encode'''
+            ### Encode
 
             unmask_tokens = self.encoder.patch_embed(unmask_patches)
             # Add position embeddings
             unmask_tokens += self.encoder.pos_embed.repeat(b, 1, 1)[batch_ind, unmask_ind + 1]
             encoded_tokens = self.encoder.transformer(unmask_tokens)
 
-            '''iv. Decode'''
+            ### Decode
             
             enc_to_dec_tokens = self.enc_to_dec(encoded_tokens)
 
@@ -99,19 +100,17 @@ class MAE(nn.Module):
 
             # loss = F.mse_loss(pred_mask_pixel_values, mask_patches)
 
-            # 比较下预测值和真实值
             mse_per_patch = (pred_mask_pixel_values - mask_patches).abs().mean(dim=-1)
             mse_all_patches = mse_per_patch.mean()
 
             print(f'mse per (masked)patch: {mse_per_patch} mse all (masked)patches: {mse_all_patches} total {num_masked} masked patches')
             print(f'all close: {torch.allclose(pred_mask_pixel_values, mask_patches, rtol=1e-1, atol=1e-1)}')
                 
-            '''vi. Reconstruction'''
+            ### Reconstruction
 
             recons_patches = patches.detach()
             # Un-shuffle (b, n_patches, patch_size**2 * c)
             recons_patches[batch_ind, mask_ind] = pred_mask_pixel_values
-            # 模型重建的效果图
             # Reshape back to image 
             # (b, n_patches, patch_size**2 * c)->(b, c, h, w)
             recons_img = recons_patches.view(
@@ -120,7 +119,7 @@ class MAE(nn.Module):
             ).permute(0, 5, 1, 3, 2, 4).reshape(b, c, h, w)
 
             mask_patches = torch.randn_like(mask_patches, device=mask_patches.device)
-            # mask 效果图
+
             patches[batch_ind, mask_ind] = mask_patches
             patches_to_img = patches.view(
                 b, h // self.patch_h, w // self.patch_w, 
@@ -129,5 +128,4 @@ class MAE(nn.Module):
 
             return recons_img, patches_to_img
     
-
-
+    # def train(self, x):

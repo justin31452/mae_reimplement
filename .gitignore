@@ -132,6 +132,4 @@ dmypy.json
 .DS_Store
 
 # other
-resized_tree.jpg
-masked_tree.jpg
-recons_tree.jpg
+*.jpg
